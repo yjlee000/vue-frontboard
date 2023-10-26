@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div>
       <input type="file" @change="onFileChange" accept="image/*">
       <img :src="imageSrc" v-if="imageSrc"/>
@@ -28,4 +28,18 @@
   img {
     width: 300px;
   }
+  </style> -->
+  <template>
+    <header>
+      여기는 header 자리입니다.
+    </header>
+    <hr/>
+  </template>
+  
+  <script>
+  export default {}
+  </script>
+  
+  <style scoped>
+  
   </style>
