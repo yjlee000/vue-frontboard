@@ -127,7 +127,11 @@
   }
   </style>
    -->
-   <template>
+
+
+
+
+   <!-- <template>
     <div class="container">
       <div 
         ref="dropzone"
@@ -195,7 +199,7 @@
         const ellipse = reactive({ cx: 100, cy: 100, rx: 50, ry: 30, rotation: 0 });
         const movingEllipse = ref(false);
         const resizingEllipse = ref(false);
-    const rotatingEllipse = ref(false);
+        const rotatingEllipse = ref(false);
   
       const onDrop = (e) => {
         const files = e.dataTransfer.files;
@@ -297,4 +301,194 @@
       max-width: 100%;
       max-height: 100%;
     }
+    </style> -->
+
+    <template>
+      <div 
+        class="dropzone" 
+        @dragover.prevent 
+        @drop="onDrop"
+        @mousedown="startInteraction"
+        @mousemove="interact"
+        @mouseup="endInteraction"
+        @mouseleave="endInteraction"
+      >
+        <p v-if="!imageSrc">여기에 이미지를 드래그 앤 드롭하세요.</p>
+        <img 
+          v-if="imageSrc" 
+          :src="imageSrc" 
+          :style="{ transform: `translate(${x}px, ${y}px) scale(${scale})`, }"
+          @contextmenu.prevent
+        />
+        <svg v-if="imageSrc" style="position: absolute; top: 0; left: 0; z-index: 3;">
+          <ellipse 
+            :cx="ellipse.cx" 
+            :cy="ellipse.cy" 
+            :rx="ellipse.rx" 
+            :ry="ellipse.ry" 
+            style="fill: none; stroke: red; stroke-width: 2; stroke-dasharray: 5,5;" 
+            @mousedown="startEllipseInteraction"
+          />
+          <circle 
+            v-for="(handle, index) in handles" 
+            :key="index" 
+            :cx="handle.x" 
+            :cy="handle.y" 
+            r="5" 
+            style="fill: blue; cursor: pointer;"
+            @mousedown="startHandleInteraction(index)"
+          />
+        </svg>
+        <div v-if="imageSrc" class="controls">
+          <button @click="zoomIn">확대</button>
+          <button @click="zoomOut">축소</button>
+        </div>
+      </div>
+    </template>
+    
+    <script>
+    import { ref, reactive, computed } from 'vue';
+    
+    export default {
+      setup() {
+        const imageSrc = ref(null);
+        const x = ref(0);
+        const y = ref(0);
+        const scale = ref(1);
+        const interacting = ref(false);
+        const ellipse = reactive({ cx: 100, cy: 100, rx: 50, ry: 30 });
+        const handles = computed(() => [
+          { x: ellipse.cx - ellipse.rx, y: ellipse.cy }, 
+          { x: ellipse.cx + ellipse.rx, y: ellipse.cy }, 
+          { x: ellipse.cx, y: ellipse.cy - ellipse.ry }, 
+          { x: ellipse.cx, y: ellipse.cy + ellipse.ry }
+        ]);
+        let currentHandle = null;
+
+        const onDrop = (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      
+      // 파일이 이미지인지 확인
+      if (!file.type.startsWith('image/')) {
+        console.log('이미지 파일만 업로드 가능합니다.');
+        return;
+      }
+
+      // 이미지 사이즈 확인
+      const image = new Image();
+      image.onload = function() {
+        const width = this.width;
+        const height = this.height;
+
+        // 원하는 사이즈 범위를 지정합니다.
+        const minWidth = 200;
+        const minHeight = 200;
+        const maxWidth = 800;
+        const maxHeight = 800;
+
+        if (width >= minWidth && width <= maxWidth && height >= minHeight && height <= maxHeight) {
+          // 이미지를 업로드하는 로직을 수행합니다.
+          imageSrc.value = URL.createObjectURL(file);
+        } else {
+          // 원하는 사이즈 범위를 벗어나는 경우 에러 처리를 합니다.
+          console.log('이미지 사이즈가 유효하지 않습니다.');
+        }
+      };
+      image.src = URL.createObjectURL(file);
+    };
+    
+        // 가상의 이미지 크기
+        const imageWidth = 800;  
+        const imageHeight = 600; 
+    
+        // const onDrop = (e) => {
+        //   e.preventDefault();
+        //   const file = e.dataTransfer.files[0];
+        //   if (file && file.type.startsWith('image/')) {
+        //     const reader = new FileReader();
+        //     reader.onload = (e) => {
+        //       imageSrc.value = e.target.result;
+        //     };
+        //     reader.readAsDataURL(file);
+        //   }
+        // };
+    
+        const startInteraction = (e) => {
+          interacting.value = true;
+        };
+    
+        const startHandleInteraction = (index) => {
+          e.stopPropagation();
+          interacting.value = true;
+          currentHandle = index;
+        };
+    
+        const startEllipseInteraction = (e) => {
+          e.stopPropagation();
+          interacting.value = true;
+          currentHandle = null;
+        };
+    
+        const interact = (e) => {
+          if (!interacting.value) return;
+          if (currentHandle !== null) {
+            switch (currentHandle) {
+              case 0: ellipse.rx -= e.movementX; break;
+              case 1: ellipse.rx += e.movementX; break;
+              case 2: ellipse.ry -= e.movementY; break;
+              case 3: ellipse.ry += e.movementY; break;
+            }
+            ellipse.rx = Math.max(0, ellipse.rx);
+            ellipse.ry = Math.max(0, ellipse.ry);
+          } else {
+            let newCx = ellipse.cx + e.movementX;
+            let newCy = ellipse.cy + e.movementY;
+            // 이미지의 경계를 벗어나지 않도록 조정
+            newCx = Math.max(0, Math.min(newCx, imageWidth - ellipse.rx));
+            newCy = Math.max(0, Math.min(newCy, imageHeight - ellipse.ry));
+            ellipse.cx = newCx;
+            ellipse.cy = newCy;
+          }
+        };
+    
+        const endInteraction = () => {
+          interacting.value = false;
+          currentHandle = null;
+        };
+    
+        const zoomIn = () => {
+          scale.value *= 1.1;
+        };
+    
+        const zoomOut = () => {
+          scale.value /= 1.1;
+        };
+    
+        return { imageSrc, x, y, scale, ellipse, handles, onDrop, startInteraction, startHandleInteraction, startEllipseInteraction, interact, endInteraction, zoomIn, zoomOut };
+      },
+    };
+    </script>
+    
+    <style scoped>
+    .dropzone {
+      width: 800px;
+      height: 600px;
+      border: 1px solid black;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 10;
+    }
+    
+    img {
+        pointer-events: none;
+        user-select: none;
+    }
     </style>
+    

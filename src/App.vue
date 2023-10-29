@@ -8,15 +8,18 @@
 <script>
 import PageHeader from '@/components/PageHeader'
 import MainContent from '@/components/ImageUploader.vue'
-import PageFooter from '@/components/PageFooter'
+// import ImageUpload from '@/components/ImageUpload.vue'
+// import ImageZoomPan from '@/components/ImageZoomPan.vue'
+// import EllipseZoomPan from '@/components/EllipseZoomPan.vue'
+import PageFooter from '@/components/PageFooter';
 
 
 export default {
   name: 'App',
   components: {
-    PageFooter,
+    PageHeader,
     MainContent,
-    PageHeader
+    PageFooter
   }
 }
 </script>
