@@ -1,30 +1,72 @@
 <template>
-  <PageHeader/> <!-- 헤더 컴포넌트 -->
-  <MainContent/> <!--바디 컴포넌트-->
-  <router-view/>  <!-- 페이지 이동이 표시될 곳 -->
-  <PageFooter/> <!-- 푸터 컴포넌트 -->
+  <h1>Ellipse Labeling Component</h1>
+  <div class="container">
+    
+    <ImageDrop @image-dropped="setImageSrc" @scaleUp="scaleUp" @scaleDown="scaleDown" @image-loaded="imageLoaded = true">
+      <ImageMove :src="imageSrc" :scale="scale">
+        <EllipseDraw v-if="imageLoaded" :imageLoaded="imageLoaded" />
+      </ImageMove>
+    </ImageDrop>
+  </div>
 </template>
 
 <script>
-import PageHeader from '@/components/PageHeader'
-import MainContent from '@/components/ImageUploader.vue'
-// import ImageUpload from '@/components/ImageUpload.vue'
-// import ImageZoomPan from '@/components/ImageZoomPan.vue'
-// import EllipseZoomPan from '@/components/EllipseZoomPan.vue'
-import PageFooter from '@/components/PageFooter';
-
+import { ref } from 'vue';
+import ImageDrop from './components/ImageDrop.vue';
+import ImageMove from './components/ImageMove.vue';
+import EllipseDraw from './components/EllipseDraw.vue';
 
 export default {
-  name: 'App',
-  components: {
-    PageHeader,
-    MainContent,
-    PageFooter
-  }
-}
+  data() {
+    return {
+      imageSrc: '',
+      scale: 1,
+      imageLoaded: false,
+      ellipseDragging: false,
+      imagePanning: false,
+    };
+  },
+  methods: {
+    setImageSrc(src) {
+      this.imageSrc = src;
+    },
+  },
+  components: { ImageDrop, ImageMove, EllipseDraw },
+  setup() {
+  const imageSrc = ref(null);
+  const scale = ref(1);
+
+  const setImageSrc = (src) => {
+    imageSrc.value = src;
+  };
+
+  const scaleUp = () => {
+    scale.value += 0.1;
+  };
+
+  const scaleDown = () => {
+    scale.value -= 0.1;
+  };
+
+  // imageLoaded ref 삭제
+  return { imageSrc, setImageSrc, scale, scaleUp, scaleDown };
+},
+};
 </script>
 
 <style>
+body {
+  background-color: rgb(43,44,64);
+}
+h1 {
+  color: white;
+}
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
